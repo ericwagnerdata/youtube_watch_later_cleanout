@@ -9,21 +9,45 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
+from anthropic import RateLimitError
+
 from wl_cleanup.summarize import classify, extract_video_id, fetch_transcript, summarize
 
 QUEUE_PATH = Path("data/queue.txt")
 NOTES_DIR = Path("data/notes")
-DELAY_SECONDS = 60
+DELAY_SECONDS = 5
+RATE_LIMIT_BACKOFF = 70  # seconds to wait when Anthropic returns 429
+RATE_LIMIT_RETRIES = 3
+
+
+def _with_rate_limit_retry(label: str, fn):
+    for attempt in range(RATE_LIMIT_RETRIES):
+        try:
+            return fn()
+        except RateLimitError:
+            if attempt == RATE_LIMIT_RETRIES - 1:
+                raise
+            wait = RATE_LIMIT_BACKOFF * (attempt + 1)
+            print(f"  {label}: hit Anthropic rate limit, sleeping {wait}s before retry...")
+            time.sleep(wait)
+    raise RuntimeError("unreachable")
+
+
+def _already_summarized(video_id: str) -> bool:
+    return any(NOTES_DIR.glob(f"*/{video_id}.md"))
 
 
 def _process(url: str) -> bool:
     video_id = extract_video_id(url)
+    if _already_summarized(video_id):
+        print(f"[{video_id}] already summarized, skipping")
+        return True
     print(f"[{video_id}] fetching transcript...")
     transcript = fetch_transcript(video_id)
     print(f"[{video_id}] classifying...")
-    category = classify(transcript)
+    category = _with_rate_limit_retry(f"[{video_id}] classify", lambda: classify(transcript))
     print(f"[{video_id}] category={category}, summarizing...")
-    summary = summarize(transcript)
+    summary = _with_rate_limit_retry(f"[{video_id}] summarize", lambda: summarize(transcript))
     out_dir = NOTES_DIR / category
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / f"{video_id}.md").write_text(summary, encoding="utf-8")

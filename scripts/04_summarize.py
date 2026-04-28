@@ -2,11 +2,16 @@
 
 Usage:
     uv run python scripts/04_summarize.py <url-or-video-id> [--save] \
-        [--category 3d-printing|laser-engraving|print-on-demand|other]
+        [--category 3d-printing|laser-engraving|print-on-demand|business|other] \
+        [--text <transcript-file>]
 
-With --save, writes the summary to
-data/notes/<category>/<video_id>.md. Category is auto-classified unless
---category is passed.
+With --save, writes the summary to data/notes/<category>/<video_id>.md.
+Category is auto-classified unless --category is passed.
+
+With --text, reads the transcript from a local file instead of fetching
+from YouTube. Useful when the YouTube IP is rate-limited; paste the
+transcript from youtubetotranscript.com or YouTube's own "Show
+transcript" button into a text file first.
 """
 from __future__ import annotations
 
@@ -44,13 +49,29 @@ def main() -> None:
             sys.exit(1)
         del args[i : i + 2]
 
+    text_path: Path | None = None
+    if "--text" in args:
+        i = args.index("--text")
+        if i + 1 >= len(args):
+            print("--text needs a file path.")
+            sys.exit(1)
+        text_path = Path(args[i + 1])
+        if not text_path.exists():
+            print(f"Transcript file not found: {text_path}")
+            sys.exit(1)
+        del args[i : i + 2]
+
     if not args:
         print("Missing URL or video ID.")
         sys.exit(1)
 
     video_id = extract_video_id(args[0])
-    print(f"Fetching transcript for {video_id}...")
-    transcript = fetch_transcript(video_id)
+    if text_path:
+        print(f"Reading transcript from {text_path}...")
+        transcript = text_path.read_text(encoding="utf-8")
+    else:
+        print(f"Fetching transcript for {video_id}...")
+        transcript = fetch_transcript(video_id)
     print(f"Transcript length: {len(transcript)} chars.")
 
     if category is None:
