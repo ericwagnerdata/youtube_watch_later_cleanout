@@ -15,7 +15,9 @@ MAX_TOKENS = 8192
 
 ROLLUP_PROMPT = """You are consolidating notes from {n} YouTube videos in
 the "{category}" category into a single reference document for the
-viewer.
+viewer. The viewer is building a side business and wants this document
+to surface concrete things they can make and sell, in addition to the
+usual themes and resources.
 
 Each note below was generated from a separate video transcript and is
 delimited by a header line of the form `===== <video_id> =====`.
@@ -24,16 +26,24 @@ Produce a single markdown document that:
 
 1. Opens with a one-paragraph orientation explaining what topics this
    category covers across the videos.
-2. **Recurring themes & frameworks** - ideas, mental models, or
-   strategies that appear in more than one video, with the video IDs
-   that mentioned them in parentheses.
-3. **Consolidated action items** - merge overlapping tactics, dedupe,
+2. **Sellable products & ideas to mimic** - the most valuable section.
+   Concrete, specific physical products / SKUs / project types the
+   videos describe being made and sold (e.g. "engraved slate
+   coasters", "articulated dragon figurine", "raccoon meme t-shirt").
+   Group by sub-type or material when possible. Cite video IDs in
+   parentheses. Include any pricing, margin, sales-volume, or
+   target-market cues. Skip this section only if the category has zero
+   sellable-product content (e.g. ai-claude-code, business advice).
+3. **Recurring themes & frameworks** - ideas, mental models, or
+   strategies that appear in more than one video, with video IDs cited.
+4. **Consolidated action items** - merge overlapping tactics, dedupe,
    group by sub-topic. Imperative voice.
-4. **Tools, products, and resources mentioned** - one bulleted list,
-   alphabetical, brief context for each.
-5. **Outliers and one-offs** - interesting ideas that only appeared in
+5. **Tools, products, and resources mentioned** - things the viewer
+   would buy or use (machines, software, suppliers, platforms), not
+   things they would sell. Alphabetical, brief context.
+6. **Outliers and one-offs** - interesting ideas that only appeared in
    a single video and don't fit the patterns above.
-6. **Per-video index** - a short bulleted list, one line per video,
+7. **Per-video index** - a short bulleted list, one line per video,
    format `- <video_id>: <one-sentence takeaway>`.
 
 Be tight. No filler. Headings as markdown.
@@ -49,10 +59,13 @@ follows, then the new notes (each delimited by `===== <video_id> =====`).
 
 Produce an updated version of the rollup that:
 
-- Keeps the same six-section structure (orientation, recurring themes,
-  consolidated action items, tools/resources, outliers, per-video index).
-- Folds new themes into existing ones where they overlap; adds video IDs
-  to the parenthetical citations.
+- Keeps the same seven-section structure (orientation, sellable products
+  & ideas to mimic, recurring themes, consolidated action items, tools/
+  resources, outliers, per-video index).
+- If the existing rollup is missing the "Sellable products & ideas to
+  mimic" section, add it now by re-deriving from existing + new notes.
+- Folds new sellable products / themes / tactics into existing entries
+  where they overlap; adds video IDs to the parenthetical citations.
 - Promotes outliers to the recurring-themes section if the new notes
   reinforce them.
 - Adds new tools alphabetically; merges entries if the same tool is
