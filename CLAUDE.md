@@ -1,11 +1,22 @@
-# Watch Later Cleanup
+# YouTube Insights
 
-Personal tool for pruning my YouTube Watch Later backlog. The YouTube Data API
-v3 cannot read or modify Watch Later (system-managed playlist, permission
-denied even with the right ID). A Playwright approach was also tried but
-Google's bot detection blocks scripted logins, so the current design extracts
-data via a DevTools console bookmarklet run in the user's real, signed-in
-browser.
+Personal tooling that turns YouTube videos into something useful, via one core idea:
+pull a transcript, let Claude extract the value. Two capabilities live here.
+
+**1. Watch Later cleanup** (`src/`, `scripts/`, `data/`) - the original tool, documented in
+full below. Prunes my YouTube Watch Later backlog. The YouTube Data API v3 cannot read or
+modify Watch Later (system-managed playlist, permission denied even with the right ID). A
+Playwright approach was also tried but Google's bot detection blocks scripted logins, so
+the current design extracts data via a DevTools console bookmarklet run in the user's real,
+signed-in browser.
+
+**2. Idea mining** (`idea-mining/`) - drop in YouTube URLs, fetch transcripts, mine them for
+ideas. Transcripts (with a title/channel/URL header) go in `idea-mining/transcripts/`,
+extracted insights in `idea-mining/insights/`. Fetching reuses `fetch_transcript` from
+`src/wl_cleanup/summarize.py` (transcriptapi.com primary, yt-dlp fallback, cached). The
+transcriptapi response is JSON, so parse the `transcript` field. For long transcripts,
+analyze with a subagent rather than loading the raw text into the main thread. The internal
+Python package stays named `wl_cleanup` (renaming it would break the working cleanup tool).
 
 ## Stack
 

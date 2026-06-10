@@ -1,9 +1,16 @@
-# Watch Later Cleanup
+# YouTube Insights
 
-Personal tool for pruning my YouTube Watch Later backlog. The YouTube Data
-API v3 cannot read or modify Watch Later, and Google blocks scripted
-browser logins, so data is captured by pasting a bookmarklet into DevTools
-on the signed-in WL page.
+Personal tooling that turns YouTube videos into something useful. Two capabilities
+share the same core idea (pull a transcript, let Claude extract the value):
+
+1. **Watch Later cleanup** (`src/`, `scripts/`, `data/`) - prune my Watch Later backlog.
+   Captures the playlist via a DevTools bookmarklet (the YouTube Data API v3 cannot read
+   Watch Later and Google blocks scripted logins), categorizes with Claude, and exports
+   removal flags from a Streamlit dashboard. This README covers it below.
+2. **Idea mining** (`idea-mining/`) - drop in YouTube URLs, fetch transcripts, and mine
+   them for ideas worth acting on. Transcripts land in `idea-mining/transcripts/`, the
+   extracted insights in `idea-mining/insights/`. Transcript fetching reuses the cleanup
+   tooling's `fetch_transcript` (see `src/wl_cleanup/summarize.py`).
 
 See `CLAUDE.md` for full architecture, data model, and gotchas.
 
@@ -35,7 +42,7 @@ Paste into DevTools console on the WL page after scrolling to the bottom.
 Downloads `wl.json` matching the shape `scripts/02_ingest.py` expects.
 
 ```javascript
-(() => {
+;(() => {
   const rows = document.querySelectorAll('ytd-playlist-video-renderer');
   const out = [];
   rows.forEach(r => {
